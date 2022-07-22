@@ -1,13 +1,11 @@
-// const express = require('express');
+const express = require('express');
 
-// const userRouter = express.Router();
+const usersController = require('../controllers/users-controllers');
 
-// router.get('/:uid',(req, res , next) =>{
-//   const userId = req.params.uid;
-//   const users = 
+const router = express.Router();
 
-//   res.json({users});
-
-// } );
-
-// module.exports = userRouter;
+router.get('/',usersController.getUsers);
+router.post('/signup',usersController.signup);
+router.post('/login', usersController.login);
+  
+module.exports = router;
