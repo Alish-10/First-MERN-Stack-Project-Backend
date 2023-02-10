@@ -15,10 +15,39 @@ const DUMMY_USERS = [
 
 ];
 
-const getUsers = (req, res, next) => {
-  res.json({ users: DUMMY_USERS });
+const getUsers = async (req, res, next) => {
+  let users
+  try {
+    users = await User.find({}, '-password');
+  } catch (err) {
+    const error = new HttpError('Fetching user failed, please try again later', 500)
+    return next(error);
+
+  }
+  res.json({ users: users.map(user => user.toObject({ getters: true })) });
 
 }
+const getUserById = async (req, res, next) => {
+  const userId = req.params.uid; // { pid: 'p1' }
+
+  let user;
+  try {
+    user = await User.findById(userId);
+
+  } catch (err) {
+    const error = new HttpError(
+      'Something went wrong,could not find a user.', 500
+    );
+    return next(error);
+  }
+
+  if (!user) {
+    const error = new HttpError('Could not find a user for the provided id.', 404);
+    return next(error);
+  }
+
+  res.json({ user: user.toObject({ getters: true }) }); // => { user } => { user: user }
+};
 
 const signup = async (req, res, next) => {
   const errors = validationResult(req);
@@ -86,3 +115,4 @@ const login = async (req, res, next) => {
 exports.getUsers = getUsers;
 exports.signup = signup;
 exports.login = login;
+exports.getUserById = getUserById;
