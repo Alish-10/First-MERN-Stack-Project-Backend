@@ -1,9 +1,11 @@
 const uuid = require('uuid').v4;
 const { validationResult } = require('express-validator');
 
+const mongoose = require('mongoose');
 const HttpError = require('../models/http-error');
 const getCoordsForAddress = require('../util/location');
 const Place = require('../models/place');
+const User = require('../models/user');
 
 let DUMMY_PLACES = [
   {
@@ -104,7 +106,6 @@ const createPlace = async (req, res, next) => {
     return next(error);
   }
 
-  // const title = req.body.title;
   const createdPlace = new Place({
     title,
     description,
@@ -113,9 +114,26 @@ const createPlace = async (req, res, next) => {
     image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Empire_State_Building_%28aerial_view%29.jpg/400px-Empire_State_Building_%28aerial_view%29.jpg',
     creator
   });
-
+  let user;
   try {
-    await createdPlace.save();
+    user = await User.findById(creator);
+  } catch (err) {
+    const error = new HttpError('Creating place failed,please try again', 500);
+    return next(error); S
+  }
+  if (!user) {
+    const error = new HttpError('Could not find user for provided id', 404)
+    return next(error);
+  }
+  try {
+    const sess = await mongoose.startSession();
+    sess.startTransaction();
+    await createdPlace.save({ session: sess });
+    user.places.push(createdPlace);
+    await user.save({ session: sess });
+    await sess.commitTransaction();
+
+
   } catch (err) {
     const error = new HttpError(
       'Creating place failed, please try again.',
