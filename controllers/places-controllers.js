@@ -13,7 +13,9 @@ const getPlaceById = async (req, res, next) => {
 
   let place;
   try {
-    place = await Place.findById(placeId);
+    place = await Place.findById(placeId).populate({
+      path: 'creator', select: '-password'
+    });
 
   } catch (err) {
     const error = new HttpError(
@@ -27,7 +29,7 @@ const getPlaceById = async (req, res, next) => {
     return next(error);
   }
 
-  res.json({ place: place.toObject({ getters: true }) }); // => { place } => { place: place }
+  res.json({ place: place.toObject({ getters: true, virtuals: true }) }); // => { place } => { place: place }
 };
 
 
@@ -36,7 +38,11 @@ const getPlacesByUserId = async (req, res, next) => {
 
   let userWithPlaces;
   try {
-    userWithPlaces = await User.findById(userId).populate('places');
+    userWithPlaces = await User.findById(userId).populate({
+      path: 'places', populate: {
+        path: 'creator', select: '-password'
+      }
+    });
 
   } catch (err) {
     const error = new HttpError(
@@ -51,14 +57,14 @@ const getPlacesByUserId = async (req, res, next) => {
       new HttpError('Could not find places for the provided user id.', 404)
     );
   }
-  res.json({ userWithPlaces: userWithPlaces.places.map(place => place.toObject({ getters: true })) });
+  res.json({ userWithPlaces: userWithPlaces.places.map(place => place.toObject({ getters: true, virtuals: true })) });
 
 };
 const getAllPlaces = async (req, res, next) => {
 
   let places;
   try {
-    places = await Place.find({});;
+    places = await Place.find({}).populate({ path: 'creator', select: '-password' });
   } catch (err) {
     const error = new HttpError(
       'Something went wrong, could not find a place.',
@@ -72,7 +78,7 @@ const getAllPlaces = async (req, res, next) => {
       new HttpError('Could not find places.', 404)
     );
   }
-  res.json({ places: places.map(place => place.toObject({ getters: true })) });
+  res.json({ places: places.map(place => place.toObject({ getters: true, virtuals: true })) });
 
 };
 
