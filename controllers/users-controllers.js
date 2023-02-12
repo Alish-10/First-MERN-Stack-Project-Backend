@@ -74,7 +74,7 @@ const signup = async (req, res, next) => {
     await createdUser.save();
   } catch (err) {
     const error = new HttpError(
-      'Signing up failed, please try again.',
+      'Signing up failed, please try again. ',
       500
     );
     return next(error);
@@ -97,7 +97,7 @@ const login = async (req, res, next) => {
     const error = new HttpError('Invalid credentials, could not log you in.', 401);
     return next(error);
   }
-  res.json({ message: "Logged in Successfully." });
+  res.status(200).json({ message: "Logged in Successfully.", user: hasUser.toObject({ getters: true }) });
 
 
 }
