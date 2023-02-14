@@ -19,7 +19,11 @@ const fileUpload = multer({
       cd(null, uuid() + '.' + ext);
     }
   }),
-  fileFilter
+  fileFilter: (req, file, cb) => {
+    const isValid = !!MIME_TYPE_MAP[file.mimetype]
+    let error = isValid ? null : new Error('Invalid mime type!')
+    cb(error, isValid)
+  }
 });
 
 multer.exports = fileUpload;
