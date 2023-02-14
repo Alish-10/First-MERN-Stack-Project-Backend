@@ -4,6 +4,7 @@ const HttpError = require('../models/http-error');
 const User = require('../models/user');
 const Place = require('../models/place');
 const mongoose = require('mongoose');
+const fileUpload = require('../middleware/file-upload')
 
 
 const getUsers = async (req, res, next) => {
