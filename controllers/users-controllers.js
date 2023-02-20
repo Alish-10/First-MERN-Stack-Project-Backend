@@ -121,6 +121,7 @@ const deleteUser = async (req, res, next) => {
     );
     return next(error);
   }
+
   const imagePath = user.image;
   try {
     const sess = await mongoose.startSession();
