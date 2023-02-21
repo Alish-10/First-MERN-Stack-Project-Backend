@@ -1,9 +1,13 @@
 const fs = require('fs');
 const { validationResult } = require('express-validator');
+const bcrypt = require('bcryptjs');
+
+
 const HttpError = require('../models/http-error');
 const User = require('../models/user');
 const Place = require('../models/place');
 const mongoose = require('mongoose');
+
 
 
 const getUsers = async (req, res, next) => {
@@ -60,7 +64,15 @@ const signup = async (req, res, next) => {
     const error = new HttpError('Email is already registered', 422);
     return next(error);
   }
+  let hashedPassword;
+  try {
+    hashedPassword = await bcrypt.hash(password, 12);
 
+  } catch (err) {
+    const error = new HttpError('Could not create user, please try again.', 500);
+    return next(error);
+
+  }
 
   const createdUser = new User({
     name, //name: name
