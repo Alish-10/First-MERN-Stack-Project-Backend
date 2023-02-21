@@ -1,6 +1,7 @@
 const fs = require('fs');
 const { validationResult } = require('express-validator');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 
 const HttpError = require('../models/http-error');
@@ -91,8 +92,23 @@ const signup = async (req, res, next) => {
     );
     return next(error);
   }
+  let token;
+  try {
+    token = jwt.sign(
+      { userId: createdUser.id, email: createdUser.email },
+      'auth_token',
+      { expiresIn: '1h' }
+    );
 
-  res.status(201).json({ user: createdUser.toObject({ getters: true }) });
+  } catch (err) {
+
+    const error = new HttpError(
+      'Signing up failed, please try again. ',
+      500
+    );
+  }
+
+  res.status(201).json({ userId: createdUser.id, email: createdUser.email, token: token });
 };
 
 const login = async (req, res, next) => {
@@ -105,11 +121,38 @@ const login = async (req, res, next) => {
     const error = new HttpError('Logging in failed,please try again later.', 500);
     return next(error);
   }
-  if (!hasUser || hasUser.password !== password) {
+  if (!hasUser) {
     const error = new HttpError('Invalid credentials, could not log you in.', 401);
     return next(error);
   }
-  res.status(200).json({ message: "Logged in Successfully.", user: hasUser.toObject({ getters: true }) });
+  let isValidPassword = false;
+  try {
+    isValidPassword = await bcrypt.compare(password, hasUser.password);
+
+  } catch (err) {
+    const error = new HttpError('Invalid credentials, could not log you in.', 500);
+    return next(error);
+  }
+  if (!isValidPassword) {
+    const error = new HttpError('Invalid credentials, could not log you in.', 401);
+    return next(error);
+  }
+  let token;
+  try {
+    token = jwt.sign(
+      { userId: hasUser.id, email: hasUser.email },
+      'auth_token',
+      { expiresIn: '1h' }
+    );
+
+  } catch (err) {
+
+    const error = new HttpError(
+      'Logging in failed, please try again. ',
+      500
+    );
+  }
+  res.status(200).json({ userId: hasUser.id, email: hasUser.email, token: token });
 
 
 }
